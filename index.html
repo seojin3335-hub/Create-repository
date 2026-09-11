@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>humanology_daily Shorts Factory</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090b10;color:#fff;font-family:Arial,"Noto Sans KR","Malgun Gothic",sans-serif}.wrap{max-width:1180px;margin:auto;padding:28px 18px 70px}.brand{font-weight:900;font-size:26px}.sub{color:#9ea5b5;margin:6px 0 26px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#171a22;border:1px solid #2b3040;border-radius:18px;padding:20px}h2{margin:0 0 15px;font-size:19px}label{display:block;color:#b9bfcc;font-size:13px;margin:12px 0 6px}input,select,textarea{width:100%;background:#0e1016;color:#fff;border:1px solid #343a4a;border-radius:10px;padding:12px;font-size:15px}button{border:0;border-radius:11px;padding:12px 16px;font-weight:800;cursor:pointer;background:#fff;color:#111;margin-top:12px}button.accent{background:#ff3b30;color:white}button.secondary{background:#272c38;color:#fff}.row{display:flex;gap:8px;flex-wrap:wrap}.result{white-space:pre-wrap;background:#0e1016;border-radius:12px;padding:15px;min-height:150px;color:#e9ecf3}.notice{background:#241d12;border:1px solid #5a4320;color:#ffd98a;padding:12px;border-radius:12px;margin-bottom:18px}.status{margin-top:10px;color:#aeb6c8;font-size:13px}.renderer{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px}.stage{background:#0e1016;border-radius:16px;padding:18px;min-height:520px}.canvas-wrap{display:flex;justify-content:center;align-items:center;min-height:500px}.preview-canvas{width:min(100%,360px);height:auto;aspect-ratio:9/16;border-radius:12px;box-shadow:0 16px 50px rgba(0,0,0,.4);background:#090b10}.thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}.thumb{background:#090b10;border:2px solid transparent;border-radius:9px;padding:3px;cursor:pointer;position:relative}.thumb.active{border-color:#fff}.thumb canvas{display:block;width:100%;border-radius:6px}.controls{background:#0e1016;border-radius:16px;padding:16px;position:relative}.controls .row{align-items:center}.controls button{flex:1;min-width:120px}.downloads{display:flex;gap:8px;flex-wrap:wrap}.downloads button{flex:1}.hint{color:#9ea5b5;font-size:12px;line-height:1.55;margin-top:10px}.check{display:flex;gap:8px;align-items:center;color:#cdd2dc;font-size:13px;margin-top:10px}.check input{width:auto}textarea{resize:vertical}.controls textarea{min-height:100px}
+.music-box{background:#141822;border:1px solid #2d3548;border-radius:12px;padding:12px;margin-top:10px;font-size:13px}
+.music-box h4{margin:0 0 8px;color:#64d2ff;font-size:14px;display:flex;align-items:center;gap:6px}
+.music-list{list-style:none;padding:0;margin:0}
+.music-item{background:#090b10;border:1px solid #222838;padding:8px 10px;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.music-item:hover{border-color:#64d2ff}
+.music-item.active{border-color:#ff3b30;background:#1a1014}
+.music-title{font-weight:bold;color:#e1e6f0}
+.music-desc{font-size:11px;color:#8f98aa;margin-top:2px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.renderer{grid-template-columns:1fr}.canvas-wrap{min-height:0}.thumbs{grid-template-columns:repeat(5,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="brand">♥ humanology_daily</div>
+<div class="sub">왜 저 사람은 저럴까? · 실제 9:16 쇼츠 카드 렌더러</div>
+<div class="notice">주제별 <b>감성 배경 사진 + 나레이션 없는 분위기 멜로디(BGM)</b>가 자동 연동됩니다.</div>
+<div class="grid">
+<section class="card">
+<h2>🔥 1. 소재 발굴</h2>
+<label>주제</label><input id="topic" value="연애와 인간관계">
+<label>콘텐츠 스타일</label><select id="style"><option>자기진단</option><option>상대방 분석</option><option>선택형</option><option>심리퀴즈</option><option>리스트형</option></select>
+<button type="button" class="accent" id="ideasBtn">소재 10개 뽑기</button>
+<div id="ideas" class="result" style="margin-top:12px">여기에 AI 소재가 표시됩니다.</div>
+</section>
+<section class="card">
+<h2>🎬 2. 쇼츠 대본</h2>
+<label>선택한 주제</label><input id="selected" placeholder="예: 좋아할수록 연락이 늦어지는 이유 5가지">
+<label>카드 수</label><input id="count" type="number" min="3" max="10" value="5">
+<button type="button" class="accent" id="scriptBtn">대본 자동 생성</button>
+<div id="script" class="result" style="margin-top:12px">생성된 쇼츠 대본이 표시됩니다.</div>
+</section>
+<section class="card" style="grid-column:1/-1">
+<h2>🔑 OpenAI API Key</h2><label>API Key</label><input id="key" type="password" placeholder="sk-...">
+<div class="sub" style="margin:8px 0 0">키는 이 브라우저의 localStorage에만 저장됩니다. 공용 PC에서는 저장하지 마세요.</div><button type="button" id="saveKeyBtn">키 저장</button>
+</section>
+<section class="card" style="grid-column:1/-1">
+<h2>🖼️ 3. 진짜 쇼츠 카드 렌더러</h2>
+<div class="renderer">
+<div class="stage">
+<div class="canvas-wrap"><canvas id="mainCanvas" class="preview-canvas" width="1080" height="1920"></canvas></div>
+<div id="thumbs" class="thumbs"></div>
+</div>
+<div class="controls">
+<label>카드 선택</label><select id="cardSelect"></select>
+<label>강조색</label><select id="accentColor"><option value="#ff453a">레드</option><option value="#ff9f0a">오렌지</option><option value="#ffd60a">옐로우</option><option value="#64d2ff">블루</option><option value="#bf5af2">퍼플</option></select>
+<label>텍스트 크기</label><input id="fontScale" type="range" min="0.76" max="1.16" step="0.01" value="1">
+<label>배경 스타일 & 무드</label><select id="bgStyle"><option value="auto">✨ 주제/대본 분위기 자동 맞춤</option><option value="secret">🌙 은밀한 / 비밀스러운 (침실/밤/그림자)</option><option value="romantic">💗 감성 로맨스 (연인/스킨십)</option><option value="mind">🧠 심리 / 자기진단 (창가/고뇌/사색)</option><option value="tension">👀 긴장 / 질투 / 의심 (어두운 조명)</option><option value="quiz">❓ 심리퀴즈 (네온/밤거리)</option><option value="warm">☀️ 따뜻한 분위기 (햇살/우드)</option><option value="black">블랙 (단색)</option></select>
+<div class="row"><button type="button" class="secondary" id="refreshImgBtn">🖼️ 다른 이미지로 새로고침</button></div>
+
+<!-- 추천 멜로디 트랙 영역 -->
+<div class="music-box">
+  <h4>🎵 분위기 맞춤 추천 멜로디 3선</h4>
+  <div id="recommendedMusic" class="music-list"></div>
+  <div class="row" style="margin-top:8px">
+    <button type="button" class="secondary" id="playAudioBtn">🎵 멜로디 재생</button>
+    <button type="button" class="secondary" id="stopAudioBtn">⏹️ 멈춤</button>
+  </div>
+</div>
+
+<label>직접 강조할 단어</label><input id="highlightWords" placeholder="예: 일관성, 진짜 이유, 관심 (쉼표로 구분)">
+<label>카드 문구 직접 수정</label><textarea id="editText" rows="5" placeholder="선택한 카드의 문구를 수정하세요."></textarea>
+<div class="row"><button type="button" class="secondary" id="applyTextBtn">✏️ 문구 수정 적용</button><button type="button" class="secondary" id="resetTextBtn">↩ 원문 복구</button></div>
+<label class="check"><input type="checkbox" id="brandToggle" checked> 하단에 ♥ humanology_daily 표시</label>
+<div class="row"><button type="button" class="secondary" id="renderBtn">🔄 카드 다시 렌더링</button><button type="button" class="secondary" id="allBtn">🖼️ 전체 카드 생성</button></div>
+<div class="downloads"><button type="button" class="accent" id="pngBtn">현재 카드 PNG 저장</button><button type="button" id="videoBtn">🎬 영상 녹화</button></div>
+<div id="renderStatus" class="status">대본을 생성한 뒤 카드 렌더러를 사용하세요.</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id); const W=1080,H=1920; let cards=[]; let active=0;
+const imgCache = {}; let imgOffset = 0; let bgmAudio = null; let selectedMusicIdx = 0;
+
+// 나레이션 없이 어울리는 분위기별 추천 멜로디 3선 데이터
+const musicPresets = {
+  secret: {
+    bgm: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
+    items: [
+      { name: '1. 몽환적인 딥 신디사이저', desc: '은밀하고 비밀스러운 주제에 어울리는 잔잔한 음향' },
+      { name: '2. 다크 시네마틱 앰비언트', desc: '속마음이나 숨겨진 심리를 읽을 때 집중되는 멜로디' },
+      { name: '3. 슬로우 템포 R&B 비트', desc: '남녀 간의 감정선이나 밤 분위기를 연출' }
+    ]
+  },
+  romantic: {
+    bgm: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
+    items: [
+      { name: '1. 따뜻한 감성 로파이(Lo-Fi)', desc: '연애, 짝사랑, 호감 신호 카드에 최적인 따뜻한 비트' },
+      { name: '2. 은은한 어쿠스틱 피아노', desc: '감성을 자극하는 잔잔한 피아노 선율' },
+      { name: '3. 칠하옵(Chillhop) 멜로디', desc: '포근하고 편안하게 텍스트를 읽을 수 있는 음악' }
+    ]
+  },
+  mind: {
+    bgm: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c0e620a22f.mp3',
+    items: [
+      { name: '1. 미니멀 사색 피아노', desc: '자기진단, 심리 분석 카드 독서에 어울리는 고요함' },
+      { name: '2. 네이처 앰비언트 사운드', desc: '잔잔하고 깨끗한 느낌을 주어 가독성을 높임' },
+      { name: '3. 첼로 & 현악 패드', desc: '깊이 있는 심리학 문구에 잔잔한 묵직함 부여' }
+    ]
+  },
+  tension: {
+    bgm: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
+    items: [
+      { name: '1. 서스펜스 시네마틱 펄스', desc: '질투, 배신, 의심을 다룰 때 집중도를 끌어올림' },
+      { name: '2. 로우 베이스 드론 사운드', desc: '궁금증과 몰입감을 자극하는 낮게 깔리는 베이스' },
+      { name: '3. 미스테리한 틱톡 타악기', desc: '쇼츠 초반 호기심을 유도하는 리드미컬한 템포' }
+    ]
+  },
+  quiz: {
+    bgm: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c3a165b6.mp3',
+    items: [
+      { name: '1. 플러크 신스 팝 비트', desc: '심리 테스트나 질문형 카드에 어울리는 경쾌함' },
+      { name: '2. 네온 팝 멜로디', desc: '참여를 유도하는 퀴즈형 쇼츠에 안성맞춤' },
+      { name: '3. 캐주얼 미디엄 로파이', desc: '부담 없이 스크롤을 멈추게 만드는 비트' }
+    ]
+  },
+  warm: {
+    bgm: 'https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3',
+    items: [
+      { name: '1. 잔잔한 햇살 피아노', desc: '일상 대중적인 공감 글귀에 어울리는 피아노 음색' },
+      { name: '2. 따뜻한 어쿠스틱 기타', desc: '밝고 긍정적인 관계 팁을 전달할 때 유용' },
+      { name: '3. 라이프스타일 앰비언트', desc: '자연스럽게 글에만 집중하게 도와주는 연주' }
+    ]
+  }
+};
+
+$("key").value=localStorage.getItem("openai_key")||"";
+$("saveKeyBtn").addEventListener("click",saveKey);$("ideasBtn").addEventListener("click",ideas);$("scriptBtn").addEventListener("click",scriptGen);$("renderBtn").addEventListener("click",()=>renderCard(active));$("allBtn").addEventListener("click",renderAll);$("pngBtn").addEventListener("click",downloadPNG);$("videoBtn").addEventListener("click",recordVideo);$("cardSelect").addEventListener("change",e=>{active=+e.target.value;syncEditor();renderAllThumbs();renderCard(active)});["accentColor","fontScale","bgStyle","brandToggle","highlightWords"].forEach(id=>$(id).addEventListener("input",()=>{updateMusicUI();renderCard(active);}));$("applyTextBtn").addEventListener("click",applyText);$("resetTextBtn").addEventListener("click",resetText);
+$("refreshImgBtn").addEventListener("click",()=>{ imgOffset++; renderCard(active); });
+$("playAudioBtn").addEventListener("click", playMelodyOnly);
+$("stopAudioBtn").addEventListener("click", stopMelody);
+
+function saveKey(){localStorage.setItem("openai_key",$("key").value.trim());alert("API 키를 저장했습니다.")}
+async function callAI(prompt){const key=$("key").value.trim()||localStorage.getItem("openai_key");if(!key)throw new Error("OpenAI API Key를 먼저 입력해주세요.");const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:"gpt-5.6-luna",input:prompt})});if(!r.ok)throw new Error("API 오류: "+r.status+" "+await r.text());const d=await r.json();return d.output?.map(x=>x.content||[]).flat().map(x=>x.text||"").join("")||"응답이 없습니다."}
+async function ideas(){$("ideas").textContent="생성 중...";try{$("ideas").textContent=await callAI(`너는 인스타그램 Shorts 채널 humanology_daily의 콘텐츠 기획자다. 주제: ${$("topic").value}. 스타일: ${$("style").value}. 영상 소스 없이 큰 한글 텍스트 카드만으로 만들 수 있고 호기심과 참여를 유도하는 쇼츠 소재 10개를 만들어라. 각 항목은 제목 / 한줄 Hook / 왜 궁금한지 / 참여 포인트 형식으로 작성하라.`)}catch(e){$("ideas").textContent=e.message}}
+async function scriptGen(){$("script").textContent="생성 중...";try{const raw=await callAI(`humanology_daily용 세로형 텍스트 카드 쇼츠 대본을 만들어라. 주제: ${$("selected").value||$("topic").value}. 카드 수: ${$("count").value}. 결과는 반드시 아래 형식만 사용하라. 각 카드는 [CARD 1]처럼 시작하고 다음 줄부터 화면에 들어갈 문장만 쓴다. 별표, 마크다운, 설명문, 카드 제목은 쓰지 마라. 구조는 강한 Hook → 궁금증 → 핵심 내용 → 반전/해석 → 댓글 참여 CTA. 한 카드에는 1~4개의 짧은 문장만. 모바일에서 크게 읽히게 짧게 써라. 심리학적 사실은 과장하지 말고 가능성 중심으로 표현하라.`);$("script").textContent=raw;parseScript(raw);renderAll()}catch(e){$("script").textContent=e.message}}
+function cleanText(s){return s.replace(/\*\*/g,"").replace(/^\s*카드\s*\d+\s*[:.)-]?\s*/i,"").replace(/^\s*\[?CARD\s*\d+\]?\s*[:.)-]?\s*/i,"").trim()}
+function parseScript(t){const matches=[...t.matchAll(/(?:\[?CARD\s*(\d+)\]?|카드\s*(\d+))\s*[:.)-]?/gi)];let out=[];if(matches.length){matches.forEach((m,i)=>{const start=m.index+m[0].length;const end=i+1<matches.length?matches[i+1].index:t.length;const body=t.slice(start,end).trim();if(body)out.push({n:+(m[1]||m[2]),text:cleanText(body)});});}else{out=t.split(/\n\s*\n/).map((x,i)=>({n:i+1,text:cleanText(x)})).filter(x=>x.text)}cards=out.slice(0,10).map(c=>({...c,original:c.text}));active=0;populateSelect();syncEditor();$("renderStatus").textContent=cards.length?`${cards.length}장의 실제 1080×1920 카드가 준비됐습니다.`:"카드를 찾지 못했습니다. 대본 형식을 확인하세요."}
+function populateSelect(){const s=$("cardSelect");s.innerHTML="";cards.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`카드 ${i+1}`;s.appendChild(o)});s.value=active}
+
+function autoBgStyle(){
+  const text = (($('selected').value||$('topic').value||'')+' '+(cards[active]?.text||'')).toLowerCase();
+  if (/성관계|잠자리|섹스|스킨십|침대|밤|욕망|바람|불륜|밀회/.test(text)) return 'secret';
+  if (/연애|사랑|호감|짝사랑|고백|이별|남친|여친|연인/.test(text)) return 'romantic';
+  if (/거짓말|질투|배신|숨기|의심|불안|회피/.test(text)) return 'tension';
+  if (/퀴즈|맞혀|선택|몇 개|테스트/.test(text)) return 'quiz';
+  if (/자기진단|성격|심리|습관|당신은/.test(text)) return 'mind';
+  return 'warm';
+}
+
+function updateMusicUI(){
+  let st = $("bgStyle").value;
+  if (st === 'auto') st = autoBgStyle();
+  const preset = musicPresets[st] || musicPresets.warm;
+  
+  const box = $("recommendedMusic");
+  box.innerHTML = "";
+  preset.items.forEach((item, idx)=>{
+    const div = document.createElement("div");
+    div.className = "music-item" + (idx === selectedMusicIdx ? " active" : "");
+    div.innerHTML = `<div><div class="music-title">${item.name}</div><div class="music-desc">${item.desc}</div></div>`;
+    div.addEventListener("click", ()=>{
+      selectedMusicIdx = idx;
+      updateMusicUI();
+      if(bgmAudio) playMelodyOnly(); // 음악 재생 중 클릭 시 바로 교체
+    });
+    box.appendChild(div);
+  });
+}
+
+// 나레이션 없이 멜로디 음악만 재생
+function playMelodyOnly(){
+  stopMelody();
+
+  let st = $("bgStyle").value;
+  if (st === 'auto') st = autoBgStyle();
+  const preset = musicPresets[st] || musicPresets.warm;
+
+  bgmAudio = new Audio(preset.bgm);
+  bgmAudio.volume = 0.5; // 나레이션이 없으므로 볼륨을 50%로 설정
+  bgmAudio.loop = true;
+  bgmAudio.play().catch(()=>{});
+
+  $("renderStatus").textContent = `🎵 분위기 멜로디 재생 중...`;
+}
+
+function stopMelody(){
+  if (bgmAudio) {
+    bgmAudio.pause();
+    bgmAudio = null;
+  }
+  $("renderStatus").textContent = "멜로디 재생 중지됨.";
+}
+
+function getPhotoUrl() {
+  let st = $("bgStyle").value;
+  if (st === 'auto') st = autoBgStyle();
+  if (st === 'black') return null;
+
+  const collections = {
+    secret: ['https://images.unsplash.com/photo-1518199266791-5375a83190b7', 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2'],
+    romantic: ['https://images.unsplash.com/photo-1522529599102-193c0d76b5b6', 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac'],
+    mind: ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e', 'https://images.unsplash.com/photo-1499209974431-9dac3ada00d7'],
+    tension: ['https://images.unsplash.com/photo-1509114397022-ed747cca3f65'],
+    quiz: ['https://images.unsplash.com/photo-1550684848-fac1c5b4e853'],
+    warm: ['https://images.unsplash.com/photo-1499750310107-5fef28a66643']
+  };
+
+  const list = collections[st] || collections.warm;
+  const idx = (active + imgOffset) % list.length;
+  return list[idx] + '?auto=format&fit=crop&w=1080&q=80';
+}
+
+function loadImage(src) {
+  if (!src) return Promise.resolve(null);
+  if (imgCache[src]) return Promise.resolve(imgCache[src]);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => { imgCache[src] = img; resolve(img); };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+function drawImageCover(ctx, img) {
+  const imgRatio = img.width / img.height;
+  const canvasRatio = W / H;
+  let renderW, renderH, offsetX, offsetY;
+  if (imgRatio > canvasRatio) {
+    renderH = H; renderW = H * imgRatio;
+    offsetX = (W - renderW) / 2; offsetY = 0;
+  } else {
+    renderW = W; renderH = W / imgRatio;
+    offsetX = 0; offsetY = (H - renderH) / 2;
+  }
+  ctx.drawImage(img, offsetX, offsetY, renderW, renderH);
+}
+
+async function drawBg(ctx){
+  const imgUrl = getPhotoUrl();
+  if (imgUrl) {
+    const img = await loadImage(imgUrl);
+    if (img) drawImageCover(ctx, img);
+    else { ctx.fillStyle = '#100c14'; ctx.fillRect(0, 0, W, H); }
+  } else {
+    ctx.fillStyle = '#06070a'; ctx.fillRect(0, 0, W, H);
+  }
+  const darkFilter = ctx.createLinearGradient(0, 0, 0, H);
+  darkFilter.addColorStop(0, 'rgba(0,0,0,0.7)');
+  darkFilter.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+  darkFilter.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = darkFilter;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function highlightSet(){return ($("highlightWords").value||'').split(',').map(x=>x.trim()).filter(Boolean)}
+function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function getSegments(text){let words=highlightSet();if(!words.length)return [{text,highlight:false}];let re=new RegExp('('+words.sort((a,b)=>b.length-a.length).map(escapeReg).join('|')+')','gi');return text.split(re).filter(Boolean).map(x=>({text:x,highlight:words.some(w=>w.toLowerCase()===x.toLowerCase())}))}
+function syncEditor(){if(cards[active])$('editText').value=cards[active].text}
+function applyText(){if(!cards[active])return;cards[active].text=$('editText').value.trim()||cards[active].text;renderAll();syncEditor();$('renderStatus').textContent=`카드 ${active+1} 문구를 수정했습니다.`}
+function resetText(){if(!cards[active])return;cards[active].text=cards[active].original||cards[active].text;syncEditor();renderAll();$('renderStatus').textContent=`카드 ${active+1} 원문으로 복구했습니다.`}
+
+function drawTextBlock(ctx,text){
+  const scale=+$('fontScale').value;
+  let fs=text.length>110?66:text.length>82?74:text.length>58?84:text.length>38?94:108;
+  fs*=scale;
+  const max=790;
+  const segments=getSegments(text);
+  ctx.font=`900 ${fs}px Arial,"Noto Sans KR","Malgun Gothic",sans-serif`;
+  let lines=[],line=[];
+  for(const seg of segments){
+    for(const ch of seg.text){
+      const test=line.map(x=>x.text).join('')+ch;
+      if(ctx.measureText(test).width>max&&line.length){lines.push(line);line=[]}
+      line.push({text:ch,highlight:seg.highlight})
+    }
+  }
+  if(line.length)lines.push(line);
+  const lh=fs*1.34;
+  const total=lines.length*lh;
+  let y=(H-total)/2+fs*.82;
+  for(const ln of lines){
+    let width=0;
+    for(const it of ln){
+      ctx.font=`900 ${fs}px Arial,"Noto Sans KR","Malgun Gothic",sans-serif`;
+      width+=ctx.measureText(it.text).width
+    }
+    let x=(W-width)/2;
+    for(const it of ln){
+      ctx.font=`900 ${fs}px Arial,"Noto Sans KR","Malgun Gothic",sans-serif`;
+      ctx.lineJoin='round';
+      ctx.lineWidth=Math.max(8,fs*.095);
+      ctx.strokeStyle='rgba(3,5,9,.95)';
+      ctx.fillStyle=it.highlight?$('accentColor').value:'#ffffff';
+      ctx.strokeText(it.text,x,y);
+      ctx.fillText(it.text,x,y);
+      x+=ctx.measureText(it.text).width
+    }
+    y+=lh
+  }
+}
+
+async function renderCardTo(canvas,i){
+  const ctx=canvas.getContext('2d');
+  await drawBg(ctx);
+  if(!cards[i]){
+    ctx.fillStyle='#8f98aa';
+    ctx.font='700 42px Arial,"Noto Sans KR","Malgun Gothic",sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('대본을 생성하면 실제 쇼츠 카드가 만들어집니다',W/2,H/2);
+    return;
+  }
+  ctx.textAlign='left';
+  drawTextBlock(ctx,cards[i].text);
+  if($('brandToggle').checked){
+    ctx.textAlign='center';
+    ctx.font='800 32px Arial,"Noto Sans KR","Malgun Gothic",sans-serif';
+    ctx.fillStyle='rgba(240,243,248,.85)';
+    ctx.fillText('♥ humanology_daily',W/2,H-105)
+  }
+  ctx.textAlign='left';
+}
+
+async function renderCard(i){
+  if(!cards.length){await renderCardTo($('mainCanvas'),0);return}
+  active=i;
+  $('cardSelect').value=i;
+  await renderCardTo($('mainCanvas'),i);
+  renderAllThumbs();
+  updateMusicUI();
+}
+
+function renderAllThumbs(){
+  const box=$('thumbs');
+  box.innerHTML='';
+  cards.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='thumb'+(i===active?' active':'');
+    const cv=document.createElement('canvas');
+    cv.width=270;
+    cv.height=480;
+    d.appendChild(cv);
+    d.addEventListener('click',async ()=>{
+      active=i;
+      $('cardSelect').value=i;
+      syncEditor();
+      renderAllThumbs();
+      await renderCard(i);
+    });
+    box.appendChild(d);
+    renderCardTo(cv,i);
+  });
+}
+
+async function renderAll(){
+  if(!cards.length){
+    parseScript($("script").textContent);
+    if(!cards.length)return;
+  }
+  populateSelect();
+  renderAllThumbs();
+  await renderCard(active);
+}
+
+function downloadPNG(){
+  if(!cards.length)return alert("먼저 대본을 생성하세요.");
+  $("mainCanvas").toBlob(blob=>{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`humanology_daily_card_${active+1}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+async function recordVideo(){
+  if(!cards.length)return alert("먼저 대본을 생성하세요.");
+  const canvas=document.createElement("canvas");
+  canvas.width=W;
+  canvas.height=H;
+  const stream=canvas.captureStream(30);
+  let mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
+  const rec=new MediaRecorder(stream,{mimeType:mime});
+  const chunks=[];
+  rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  rec.onstop=()=>{
+    const blob=new Blob(chunks,{type:mime});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="humanology_daily_shorts.webm";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    $("renderStatus").textContent="영상 저장 완료: WebM";
+  };
+  rec.start();
+  for(let i=0;i<cards.length;i++){
+    await renderCardTo(canvas,i);
+    await new Promise(r=>setTimeout(r,2600));
+  }
+  rec.stop();
+  $("renderStatus").textContent="영상 녹화 중... 카드당 약 2.6초";
+}
+
+// initial load
+renderCard(0);
+updateMusicUI();
+</script>
+</body>
+</html>
