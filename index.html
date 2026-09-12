@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<link rel="apple-touch-icon" href="https://img.icons8.com/color/512/youtube-play.png">
-<link rel="shortcut icon" href="https://img.icons8.com/color/512/youtube-play.png">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>humanology_daily AI Photo Shorts Factory v2.3</title>
+<link rel="apple-touch-icon" href="https://img.icons8.com/color/512/youtube-play.png">
+<link rel="shortcut icon" href="https://img.icons8.com/color/512/youtube-play.png">
 <script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
 <style>
@@ -17,10 +17,17 @@
 
 <div id="authModal" class="modal-overlay">
   <div class="modal-box">
-    <h2>🔒 접속 인증</h2>
+    <h2>🔒 비밀번호 인증</h2>
     <p class="small" style="margin-bottom:15px;">설정한 비밀번호를 입력해주세요.</p>
     <input type="password" id="authPassword" placeholder="비밀번호 입력" onkeyup="if(event.key==='Enter') verifyPassword()">
     <button type="button" class="accent" style="width:100%;margin-top:15px;" onclick="verifyPassword()">접속하기</button>
+    
+    <div style="margin-top:20px; border-top:1px solid #2b3040; pt:15px; text-align:left;">
+      <p class="small" style="color:#ff9f0a;">🔑 API 키 변경/재설정 필요한 경우:</p>
+      <input type="password" id="newApiKey" placeholder="OpenAI API 키 (sk-...)" style="font-size:12px; margin-top:5px;">
+      <button type="button" class="secondary" style="width:100%; font-size:12px; padding:8px; margin-top:5px;" onclick="saveNewKey()">API 키 저장하기</button>
+    </div>
+    
     <div id="authError" style="color:#ff3b30;margin-top:10px;font-size:13px;"></div>
   </div>
 </div>
@@ -67,73 +74,102 @@
 </div></div></section>
 </div></div>
 <script>
-// =========================================================
-// 🔒 암호화된 API 키와 복호화 로직
-// =========================================================
-const ENCRYPTED_KEY_DATA = "3IRswZX56mTELW17t1vN6FPWnh9AZY6ySsX70rWsr50k1BDD50dloVKMVr3Qxq5KdrP+hRSowM7cDjjDMUfQE0LcbgeP1pBZSwzFefdqjQ4/6UQobSMgrEQSijCHg6i9mJaizyZRI5A3BM6BtnDEWgRlv9nPpo62TmfF3QMpsjMf/aeorj9ObxNotuuQpSGybDk55xfn7LsUr2+cJKCGOzwgwVh8bFSF7rsLtAeqr/b+lzaVOjE+K8WSkVR0sqs8T87l"; // <--- 콘솔에서 생성된 텍스트를 여기에 붙여넣으세요.
-let decryptedKey = "";
+let activeKey = localStorage.getItem("hd_api_key") || "";
 
-async function verifyPassword() {
-  const pwd = $("authPassword").value.trim();
-  if(!pwd) return $("authError").textContent = "비밀번호를 입력하세요.";
-  try {
-    const enc = new TextEncoder();
-    const combined = new Uint8Array(atob(ENCRYPTED_KEY_DATA).split("").map(c => c.charCodeAt(0)));
-    const iv = combined.slice(0, 12);
-    const data = combined.slice(12);
-
-    const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pwd), "PBKDF2", false, ["deriveKey"]);
-    const key = await crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: enc.encode("fixed_salt"), iterations: 100000, hash: "SHA-256" },
-      keyMaterial, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
-    );
-    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
-    const originalText = new TextDecoder().decode(decrypted);
-
-    if(originalText.startsWith("sk-")) {
-      decryptedKey = originalText;
-      $("authModal").style.display = "none";
-    } else {
-      $("authError").textContent = "비밀번호가 올바르지 않습니다.";
+function verifyPassword() {
+  const pwd = document.getElementById("authPassword").value.trim();
+  if (pwd === "5864") {
+    if (!activeKey) {
+      document.getElementById("authError").textContent = "저장된 API 키가 없습니다. 아래에 키를 먼저 등록해 주세요.";
+      return;
     }
-  } catch(e) {
-    $("authError").textContent = "비밀번호가 올바르지 않습니다.";
+    document.getElementById("authModal").style.display = "none";
+  } else {
+    document.getElementById("authError").textContent = "비밀번호가 틀렸습니다.";
   }
+}
+
+function saveNewKey() {
+  const k = document.getElementById("newApiKey").value.trim();
+  const pwd = document.getElementById("authPassword").value.trim();
+  if (pwd !== "5864") {
+    document.getElementById("authError").textContent = "올바른 접속 비밀번호(5864)를 먼저 입력하세요.";
+    return;
+  }
+  if (!k.startsWith("sk-")) {
+    document.getElementById("authError").textContent = "올바른 OpenAI API 키 형식(sk-...)이 아닙니다.";
+    return;
+  }
+  localStorage.setItem("hd_api_key", k);
+  activeKey = k;
+  document.getElementById("authError").style.color = "#34c759";
+  document.getElementById("authError").textContent = "API 키가 안전하게 저장되었습니다!";
+  setTimeout(() => {
+    document.getElementById("authModal").style.display = "none";
+  }, 800);
 }
 
 function getActiveKey() {
-  if(!decryptedKey) {
-    $("authModal").style.display = "flex";
-    throw new Error("비밀번호 인증이 필요합니다.");
+  if (!activeKey) {
+    document.getElementById("authModal").style.display = "flex";
+    throw new Error("API 키 인증이 필요합니다.");
   }
-  return decryptedKey;
+  return activeKey;
 }
 
 const $=id=>document.getElementById(id),W=1080,H=1920;let cards=[],active=0,bgOverrides={},bgNonce=0,aiBgs={},imgCache={};
-const BG_FILES=Array.from({length:40},(_,i)=>`backgrounds/bg_${String(i+1).padStart(2,'0')}.jpg`);
-const BG_POOLS={love:[1,2,3,4,5,6,7,8,9,10,11,12],warm:[1,3,4,5,6,10,13,14,15,16,17,18],rain:[13,14,15,16,17,18,19,20],tension:[13,14,15,16,17,18,19,20,21,22,23,24],mind:[19,20,21,22,23,24,25,26,27,28,29,30],people:[7,8,9,10,25,26,27,28,29,30,31,32],quiz:[5,6,14,15,31,32,33,34,35,36],cafe:[3,7,8,9,10],flowers:[4,5,6,11,12,16],night:[19,20,21,22,23,24],sunset:[1,2,5,6,17,18],morning:[4,10,15,16,25],city:[20,21,22,23,27,28,29,30],street:[25,26,27,28,29,30,31,32],mirror:[19,20,21,22,23,24]};
 
 $("ideasBtn").onclick=ideas;$("scriptBtn").onclick=scriptGen;$("renderBtn").onclick=()=>renderCard(active);$("allBtn").onclick=renderAll;$("pngBtn").onclick=downloadPNG;$("videoBtn").onclick=recordVideo;$("aiOneBtn").onclick=()=>generateAIForCard(active);$("aiAllBtn").onclick=generateAIAll;$("shuffleBgBtn").onclick=shuffleAI;$("cardSelect").onchange=e=>{active=+e.target.value;syncEditor();updateAIPreview();renderAllThumbs();renderCard(active)};["accentColor","fontScale","bgStyle","photoStyle","brandToggle","highlightWords"].forEach(id=>$(id).addEventListener("input",()=>{renderCard(active);renderAllThumbs()}));$("applyTextBtn").onclick=applyText;$("resetTextBtn").onclick=resetText;$("hashtagBtn").onclick=hashtags;$("hashtagCopyBtn").onclick=copyHashtags;$("pasteScriptBtn").onclick=applyPastedScript;
 
 async function callAI(prompt){
   const key=getActiveKey();
-  const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:"gpt-5.6-luna",input:prompt})});
-  if(!r.ok)throw new Error("API 오류: "+r.status+" "+await r.text());
+  const r=await fetch("https://api.openai.com/v1/chat/completions",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({
+      model:"gpt-4o-mini",
+      messages:[{role:"system",content:"You are a helpful assistant."}, {role:"user",content:prompt}]
+    })
+  });
+  if(!r.ok){
+    const errText = await r.text();
+    throw new Error("API 오류: "+r.status+" "+errText);
+  }
   const d=await r.json();
-  return d.output?.map(x=>x.content||[]).flat().map(x=>x.text||"").join("")||"응답이 없습니다.";
+  return d.choices?.[0]?.message?.content || "응답이 없습니다.";
+}
+
+async function generateImage(prompt){
+  const key=getActiveKey();
+  const r=await fetch("https://api.openai.com/v1/images/generations",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({
+      model:"dall-e-3",
+      prompt:prompt,
+      size:"1024x1792",
+      quality:"standard",
+      n:1
+    })
+  });
+  if(!r.ok){
+    const errText = await r.text();
+    throw new Error("이미지 생성 오류: "+r.status+" "+errText);
+  }
+  const d=await r.json();
+  return d.data?.[0]?.url;
 }
 
 async function ideas(){$("ideas").textContent="생성 중...";try{$("ideas").textContent=await callAI(`너는 인스타그램 Shorts 채널 humanology_daily의 콘텐츠 기획자다. 주제: ${$("topic").value}. 스타일: ${$("style").value}. 영상 소스 없이 큰 한글 텍스트 카드만으로 만들 수 있고 호기심과 참여를 유도하는 쇼츠 소재 10개를 만들어라. 각 항목은 제목 / 한줄 Hook / 왜 궁금한지 / 참여 포인트 형식으로 작성하라.`)}catch(e){$("ideas").textContent=e.message}}
-async function scriptGen(){$("script").textContent="대본 생성 중...";$("scriptBtn").disabled=true;try{const raw=await callAI(`humanology_daily용 세로형 텍스트 카드 쇼츠 대본을 만들어라. 주제: ${$("selected").value||$("topic").value}. 카드 수: ${$("count").value}. 결과는 반드시 아래 형식만 사용하라. 각 카드는 [CARD 1]처럼 시작하고 다음 줄부터 화면에 들어갈 문장만 쓴다. 별표, 마크다운, 설명문, 카드 제목은 쓰지 마라. 구조는 강한 Hook → 궁금증 → 핵심 내용 → 반전/해석 → 댓글 참여 CTA. 각 카드에는 큰 헤드라인 1~3줄과 작은 보조설명 1~3줄을 빈 줄로 구분해라. 마지막 카드는 댓글 참여를 유도하되 너무 광고처럼 쓰지 마라. 모바일에서 크게 읽히게 짧게 써라. 심리학적 사실은 과장하지 말고 가능성 중심으로 표현하라. 각 카드마다 시청자의 시선을 끌 핵심 단어나 짧은 문구를 2~4개 골라 **단어** 형태로 감싸서 표시해라(마크다운 별표 2개). 너무 많이 감싸지 말고 정말 강조할 부분만 감싸라.`);$("script").textContent=raw;parseScript(raw);await renderAll();if($("autoPhoto").checked){await generateAIAll(true)}}catch(e){$("script").textContent=e.message;$("renderStatus").textContent=e.message}finally{$("scriptBtn").disabled=false}}
-async function applyPastedScript(){const raw=$("pasteScript").value.trim();if(!raw)return alert("붙여넣을 대본을 입력해주세요.");$("script").textContent=raw;parseScript(raw);await renderAll();$("renderStatus").textContent=`${cards.length}장의 카드를 대본에서 만들었습니다. (API 미사용)`}
-async function hashtags(){const topic=$("selected").value||$("topic").value;if(!topic&&!cards.length)return alert("먼저 주제를 입력하거나 대본을 생성하세요.");$("hashtagResult").textContent="해시태그 생성 중...";$("hashtagBtn").disabled=true;$("hashtagCopyStatus").textContent="";try{const contentSample=cards.map(c=>c.text).join(" / ").slice(0,600);const raw=await callAI(`너는 인스타그램/텔레그램 심리 쇼츠 채널 humanology_daily의 해시태그 전문가다. 주제: ${topic}. 콘텐츠 내용 요약: ${contentSample||"(대본 없음, 주제만 참고)"}. 이 콘텐츠에 어울리는 해시태그 5~10개를 추천해라. 조건: 1) 모두 # 로 시작하고 띄어쓰기 없이 붙여써라. 2) 너무 뻔하고 일반적인 태그(예: #좋아요, #맞팔)는 피하고 주제·심리·연애·인간관계 등과 연관성 높은 태그를 우선하라. 3) 채널 브랜드 태그 #humanology_daily 를 마지막에 꼭 포함해라. 4) 결과는 설명 없이 해시태그만 공백으로 구분해 한 줄로 출력해라.`);$("hashtagResult").textContent=raw.trim()}catch(e){$("hashtagResult").textContent=e.message}finally{$("hashtagBtn").disabled=false}}
-function copyHashtags(){const t=$("hashtagResult").textContent.trim();if(!t||t==="여기에 추천 해시태그가 표시됩니다."||t==="해시태그 생성 중...")return;navigator.clipboard.writeText(t).then(()=>{$("hashtagCopyStatus").textContent="복사되었습니다!";setTimeout(()=>$("hashtagCopyStatus").textContent="",1800)}).catch(()=>{$("hashtagCopyStatus").textContent="복사에 실패했습니다. 직접 선택해 복사해주세요."})}
+async function scriptGen(){$("script").textContent="대본 생성 중...";$("scriptBtn").disabled=true;try{const raw=await callAI(`humanology_daily용 세로형 텍스트 카드 쇼츠 대본을 만들어라. 주제: ${$("selected").value||$("topic").value}. 카드 수: ${$("count").value}. 결과는 반드시 아래 형식만 사용하라. 각 카드는 [CARD 1]처럼 시작하고 다음 줄부터 화면에 들어갈 문장만 쓴다. 별표, 마크다운, 설명문, 카드 제목은 쓰지 마라. 구조는 강한 Hook → 궁금증 → 핵심 내용 → 반전/해석 → 댓글 참여 CTA. 각 카드에는 큰 헤드라인 1~3줄과 작은 보조설명 1~3줄을 빈 줄로 구분해라. 마지막 카드는 댓글 참여를 유도하되 너무 광고처럼 쓰지 마라. 모바일에서 크게 읽히게 짧게 써라. 각 카드마다 시청자의 시선을 끌 핵심 단어나 짧은 문구를 2~4개 골라 **단어** 형태로 감싸서 표시해라.`);$("script").textContent=raw;parseScript(raw);await renderAll();if($("autoPhoto").checked){await generateAIAll(true)}}catch(e){$("script").textContent=e.message;$("renderStatus").textContent=e.message}finally{$("scriptBtn").disabled=false}}
+async function applyPastedScript(){const raw=$("pasteScript").value.trim();if(!raw)return alert("붙여넣을 대본을 입력해주세요.");$("script").textContent=raw;parseScript(raw);await renderAll();$("renderStatus").textContent=`${cards.length}장의 카드를 대본에서 만들었습니다.`}
+async function hashtags(){const topic=$("selected").value||$("topic").value;if(!topic&&!cards.length)return alert("먼저 주제를 입력하거나 대본을 생성하세요.");$("hashtagResult").textContent="해시태그 생성 중...";$("hashtagBtn").disabled=true;try{const contentSample=cards.map(c=>c.text).join(" / ").slice(0,600);const raw=await callAI(`주제: ${topic}. 이 콘텐츠에 어울리는 해시태그 5~10개를 추천해라. #humanology_daily 포함.`);$("hashtagResult").textContent=raw.trim()}catch(e){$("hashtagResult").textContent=e.message}finally{$("hashtagBtn").disabled=false}}
+function copyHashtags(){const t=$("hashtagResult").textContent.trim();if(!t)return;navigator.clipboard.writeText(t).then(()=>{$("hashtagCopyStatus").textContent="복사되었습니다!"})}
+
 function cleanText(s){return s.replace(/^\s*카드\s*\d+\s*[:.)-]?\s*/i,"").replace(/^\s*\[?CARD\s*\d+\]?\s*[:.)-]?\s*/i,"").trim()}
 function extractHighlights(s){const words=[];const cleaned=s.replace(/\*\*(.+?)\*\*/g,(m,w)=>{const word=w.trim();if(word)words.push(word);return word});return{cleaned:cleaned.trim(),words}}
 function parseScript(t){const matches=[...t.matchAll(/(?:\[?CARD\s*(\d+)\]?|카드\s*(\d+))\s*[:.)-]?/gi)];let out=[];if(matches.length){matches.forEach((m,i)=>{const start=m.index+m[0].length,end=i+1<matches.length?matches[i+1].index:t.length,body=t.slice(start,end).trim();if(body){const{cleaned,words}=extractHighlights(cleanText(body));out.push({n:+(m[1]||m[2]),text:cleaned,autoHighlights:words})}})}else out=t.split(/\n\s*\n/).map((x,i)=>{const{cleaned,words}=extractHighlights(cleanText(x));return{n:i+1,text:cleaned,autoHighlights:words}}).filter(x=>x.text);cards=out.slice(0,10).map(c=>({...c,original:c.text}));active=0;populateSelect();syncEditor();$("renderStatus").textContent=cards.length?`${cards.length}장의 카드가 준비됐습니다.`:"카드를 찾지 못했습니다."}
 function populateSelect(){const s=$("cardSelect");s.innerHTML="";cards.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`카드 ${i+1}`;s.appendChild(o)});s.value=active}
-function autoBgMood(){const s=(($("selected").value||$("topic").value||"")+" "+(cards[active]?.text||"")).toLowerCase();if(/연애|사랑|호감|짝사랑|썸|고백|이별|남친|여친|연인/.test(s))return"love";if(/거짓말|질투|배신|숨기|의심|불안|회피/.test(s))return"tension";if(/퀴즈|맞혀|선택|몇 개|테스트/.test(s))return"quiz";if(/친구|인간관계|관계|동료|상대방/.test(s))return"people";if(/자기진단|성격|심리|습관|당신은/.test(s))return"mind";return"warm"}
-function pickBgIndex(i){if(bgOverrides[i]!=null)return bgOverrides[i];const v=$("bgStyle").value,mood=v==="auto"?autoBgMood():v,pool=BG_POOLS[mood]||BG_POOLS.warm;return pool[(i*7+bgNonce)%pool.length]-1}
 
 function loadImage(src){
   if(imgCache[src]) return Promise.resolve(imgCache[src]);
@@ -146,68 +182,37 @@ function loadImage(src){
   });
 }
 
-function cardScene(i){const text=(cards[i]?.text||"")+" "+($('selected').value||$('topic').value||"");const t=text.toLowerCase();
-const scenes=[
-[/답장|연락|전화|메시지|읽씹|카톡/,"a smartphone glowing on a real dining table at night, an unread message on the lock screen but NO readable text, quiet apartment, realistic hands just outside frame"],
-[/첫인상|표정|눈빛|미소|말투/,"two real people meeting in a modern cafe, natural facial expressions and body language, candid documentary photography"],
-[/질투|의심|불안|거짓말|배신|숨기/,"a person standing alone near a rain-covered apartment window at night, tense posture, city reflections, cinematic documentary photograph"],
-[/이별|헤어|그리워|후회/,"an empty apartment after someone has left, a coat on a chair and a half-open door, late afternoon light, emotionally restrained realistic photography"],
-[/친구|우정|인간관계|동료/,"three real friends in a casual cafe or street setting, natural distance and body language, candid lifestyle photography"],
-[/회사|직장|상사|동료|회의/,"a realistic modern office after a meeting, several people leaving a conference room, subtle body language, natural window light"],
-[/자존감|자기|성격|습관|성향|당신/,"a real person alone in a quiet bedroom or hallway looking at their reflection, natural morning light, intimate documentary photography"],
-[/선택|퀴즈|테스트|몇 개|맞혀/,"a real tabletop with several distinct everyday objects arranged naturally, bright daylight, playful lifestyle photography"],
-[/연애|사랑|호감|짝사랑|썸|고백|연인|남친|여친/,"a real couple walking together on a quiet evening street, subtle affectionate body language, warm practical lights, candid cinematic photography"],
-[/아침|출근|월요일|하루/,"a real small apartment in early morning, sunlight through curtains, a person getting ready near a window, natural lived-in details"],
-[/밤|새벽|외로|혼자/,"a real quiet bedroom at midnight, city lights through the window, person sitting on the edge of the bed, authentic low light photography"],
-[/성공|목표|공부|집중/,"a real study desk in a bright library or home office, person concentrating, papers and ordinary objects, natural documentary photo"]];
-for(const [re,desc] of scenes)if(re.test(t))return desc;
-const fallback=["a real urban bus stop at dusk with one person waiting, candid street photography","a real bookstore aisle with two people passing each other, soft window light","a real apartment hallway with a person pausing by the door, natural shadows","a real rooftop overlooking a Korean city at blue hour, authentic architecture","a real quiet park path with one person walking, late afternoon natural light","a real kitchen during an ordinary evening, person preparing a simple drink, lived-in details"];return fallback[i%fallback.length];}
-
-function promptForCard(i){const mood=$('bgStyle').value==="auto"?autoBgMood():$('bgStyle').value;const style=$('photoStyle').value;const variation=["warm window-side portrait","rainy-night window scene","sunlit interior with natural shadows","blue-hour city interior","intimate bedroom from behind the subject","quiet cafe with candid people","empty room after someone leaves","close environmental detail with strong foreground","street scene at dusk","over-the-shoulder documentary view"][i%10];const scene=cardScene(i);const ref=style==="reference"?`Match this visual language: premium photorealistic lifestyle/editorial photograph, vertical social-media frame, cinematic but believable, warm amber and deep blue color contrast, soft practical lighting, shallow depth of field, subtle film grain, realistic lens bloom, natural imperfections, rich textures, emotionally suggestive but not staged. The composition should feel like a still from a modern drama or premium lifestyle campaign. Use a strong photographic subject and environment, not an abstract background. Leave a clean but photographic region for Korean text overlay. Do not repeat the same prop-centered composition across cards.`:`Premium ${style} photorealistic lifestyle photograph, realistic camera optics and natural textures.`;return `Create ONE completely new photorealistic vertical 9:16 photograph for a Korean psychology/social-media short. CARD ${i+1}: ${cards[i]?.text||"psychology and human relationships"}. OVERALL TOPIC: ${$('selected').value||$('topic').value}. SCENE: ${scene}. VARIATION: ${variation}. MOOD: ${mood}. ${ref} IMPORTANT: the image must communicate the meaning of THIS card. Do not default to coffee cups, notebooks, flowers, candles, bedrooms, sunsets, or window scenes unless the card meaning calls for them. Change location, subject, lighting, season, camera angle and visual motif from card to card. Prefer real people, real rooms, real streets, real objects and believable Korean urban/lifestyle settings when relevant. NO text, letters, numbers, logos, watermark, UI, collage, border, poster, illustration, 3D render, vector art, abstract gradient, flat color background. Only a finished photograph.`}
-
-async function generateImage(prompt){
-  const key=getActiveKey();
-  const r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:"gpt-image-2",prompt,size:"1024x1536",n:1,quality:"medium",output_format:"jpeg",output_compression:88})});
-  if(!r.ok)throw new Error("이미지 API 오류: "+r.status+" "+await r.text());
-  const d=await r.json();
-  const item=d.data?.[0];
-  if(item?.b64_json)return "data:image/jpeg;base64,"+item.b64_json;
-  if(item?.url)return item.url;
-  throw new Error("이미지 응답에서 결과를 찾지 못했습니다.");
-}
-
-async function generateAIForCard(i){if(!cards.length)return alert("먼저 대본을 생성하세요.");active=i;$('cardSelect').value=i;$("renderStatus").textContent=`카드 ${i+1}의 AI 사진 배경을 만드는 중...`;$("aiOneBtn").disabled=true;try{const src=await generateImage(promptForCard(i));aiBgs[i]=src;await loadImage(src);updateAIPreview();await renderCard(i);$("renderStatus").textContent=`카드 ${i+1} AI 사진 배경 완성.`}catch(e){$("renderStatus").textContent=e.message}finally{$("aiOneBtn").disabled=false}}
-async function generateAIAll(silent=false){if(!cards.length)return alert("먼저 대본을 생성하세요.");if(!silent&&!confirm(`${cards.length}장의 실제 AI 사진을 생성합니다. 이미지 생성 API 사용량이 카드 수만큼 발생합니다. 계속할까요?`))return;$("aiAllBtn").disabled=true;try{for(let i=0;i<cards.length;i++){$("renderStatus").textContent=`실제 사진 ${i+1}/${cards.length} 생성 중...`;const src=await generateImage(promptForCard(i));aiBgs[i]=src;await loadImage(src);active=i;$("cardSelect").value=i;updateAIPreview();await renderAllThumbs();await renderCard(i)}active=0;$("cardSelect").value=0;syncEditor();await renderCard(0);$("renderStatus").textContent=`${cards.length}장의 실제 사진 배경 생성 완료.`}catch(e){$("renderStatus").textContent=`AI 사진 생성 실패: ${e.message}`}finally{$("aiAllBtn").disabled=false}}
-async function shuffleAI(){if(!cards.length)return alert("먼저 대본을 생성하세요.");await generateAIForCard(active)}
+async function generateAIForCard(i){if(!cards.length)return alert("먼저 대본을 생성하세요.");active=i;$('cardSelect').value=i;$("renderStatus").textContent=`카드 ${i+1}의 AI 사진 배경을 만드는 중...`;$("aiOneBtn").disabled=true;try{const src=await generateImage(`A cinematic photorealistic background for vertical shorts card. Topic: ${cards[i]?.text}`);aiBgs[i]=src;await loadImage(src);updateAIPreview();await renderCard(i);$("renderStatus").textContent=`카드 ${i+1} AI 사진 배경 완성.`}catch(e){$("renderStatus").textContent=e.message}finally{$("aiOneBtn").disabled=false}}
+async function generateAIAll(silent=false){if(!cards.length)return alert("먼저 대본을 생성하세요.");$("aiAllBtn").disabled=true;try{for(let i=0;i<cards.length;i++){$("renderStatus").textContent=`사진 ${i+1}/${cards.length} 생성 중...`;const src=await generateImage(`A cinematic photorealistic background for vertical shorts card. Topic: ${cards[i]?.text}`);aiBgs[i]=src;await loadImage(src);active=i;$("cardSelect").value=i;updateAIPreview();await renderAllThumbs();await renderCard(i)}active=0;$("cardSelect").value=0;syncEditor();await renderCard(0);$("renderStatus").textContent=`모든 사진 생성 완료.`}catch(e){$("renderStatus").textContent=`AI 사진 생성 실패: ${e.message}`}finally{$("aiAllBtn").disabled=false}}
+async function shuffleAI(){await generateAIForCard(active)}
 function updateAIPreview(){const img=$("aiPreview"),src=aiBgs[active];if(src){img.src=src;img.style.display="block"}else{img.removeAttribute("src");img.style.display="none"}}
 function syncEditor(){if(cards[active])$("editText").value=cards[active].text}
-function applyText(){if(!cards[active])return;const raw=$("editText").value.trim();if(raw){const{cleaned,words}=extractHighlights(raw);cards[active].text=cleaned;if(words.length)cards[active].autoHighlights=words}renderAll();syncEditor();$("renderStatus").textContent=`카드 ${active+1} 문구를 수정했습니다.`}
-function resetText(){if(!cards[active])return;cards[active].text=cards[active].original||cards[active].text;syncEditor();renderAll();$("renderStatus").textContent=`카드 ${active+1} 원문으로 복구했습니다.`}
-function charWrap(ctx,text,max){const out=[];let line="";for(const ch of text){const test=line+ch;if(ctx.measureText(test).width>max&&line){out.push(line);line=ch}else line=test}if(line)out.push(line);return out}
-function wrapLines(ctx,text,max){const tokens=text.split(/(\s+)/).filter(x=>x!=="");const out=[];let line="";for(const tok of tokens){const test=line+tok;if(ctx.measureText(test).width>max&&line.trim()){out.push(line.trim());line=tok.trimStart()}else line=test}if(line.trim())out.push(line.trim());const fixed=[];for(const l of out){if(ctx.measureText(l).width>max)fixed.push(...charWrap(ctx,l,max));else fixed.push(l)}return fixed}
-function balancedWrap(ctx,text,max){const greedy=wrapLines(ctx,text,max);if(greedy.length<=1)return greedy;let lo=Math.max(40,max*0.5),hi=max,best=max;for(let iter=0;iter<12;iter++){const mid=(lo+hi)/2;const test=wrapLines(ctx,text,mid);if(test.length<=greedy.length){best=mid;hi=mid}else lo=mid}return wrapLines(ctx,text,best)}
+function applyText(){if(!cards[active])return;const raw=$("editText").value.trim();if(raw){const{cleaned,words}=extractHighlights(raw);cards[active].text=cleaned;if(words.length)cards[active].autoHighlights=words}renderAll();syncEditor();}
+function resetText(){if(!cards[active])return;cards[active].text=cards[active].original||cards[active].text;syncEditor();renderAll();}
 
-function highlightSet(i){const manual=($( "highlightWords").value||"").split(",").map(x=>x.trim()).filter(Boolean);const auto=cards[i]?.autoHighlights||[];return[...manual,...auto]}
+function highlightSet(i){const manual=($("highlightWords").value||"").split(",").map(x=>x.trim()).filter(Boolean);const auto=cards[i]?.autoHighlights||[];return[...manual,...auto]}
 function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
 function getSegments(text,i){const words=highlightSet(i);if(!words.length)return[{text,highlight:false}];const re=new RegExp("("+words.sort((a,b)=>b.length-a.length).map(escapeReg).join("|")+")","gi");return text.split(re).filter(Boolean).map(x=>({text:x,highlight:words.some(w=>w.toLowerCase()===x.toLowerCase())}))}
+
+function charWrap(ctx,text,max){const out=[];let line="";for(const ch of text){const test=line+ch;if(ctx.measureText(test).width>max&&line){out.push(line);line=ch}else line=test}if(line)out.push(line);return out}
+function wrapLines(ctx,text,max){const tokens=text.split(/(\s+)/).filter(x=>x!=="");const out=[];let line="";for(const tok of tokens){const test=line+tok;if(ctx.measureText(test).width>max&&line.trim()){out.push(line.trim());line=tok.trimStart()}else line=test}if(line.trim())out.push(line.trim());const fixed=[];for(const l of out){if(ctx.measureText(l).width>max)fixed.push(...charWrap(ctx,l,max));else fixed.push(l)}return fixed}
 
 function drawTextBlock(ctx,text,i){
   const scale=+$('fontScale').value;const max=820;const parts=text.split(/\n\s*\n/);const headline=(parts[0]||text).trim();const body=parts.slice(1).join("\n").trim();
   const hfs=Math.max(72,Math.min(112,108*scale-(headline.length>55?18:0)));const bfs=Math.max(38,Math.min(54,50*scale));
-  const family='RefKR,"Noto Sans KR","Noto Sans CJK KR","Malgun Gothic",sans-serif';
-  ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.lineJoin="round";ctx.lineCap="round";
-  const hLines=balancedWrap((ctx.font=`900 ${hfs}px ${family}`,ctx),headline,max);
-  const bLines=body?balancedWrap((ctx.font=`500 ${bfs}px ${family}`,ctx),body,max):[];
+  const family='RefKR,"Noto Sans KR","Malgun Gothic",sans-serif';
+  ctx.textAlign="left";ctx.textBaseline="alphabetic";
+  const hLines=wrapLines((ctx.font=`900 ${hfs}px ${family}`,ctx),headline,max);
+  const bLines=body?wrapLines((ctx.font=`500 ${bfs}px ${family}`,ctx),body,max):[];
   const hLH=hfs*1.15,bLH=bfs*1.55,gap=body?46:0,total=hLines.length*hLH+gap+bLines.length*bLH;
   let y=Math.max(470,(H-total)/2+70);
   const drawHighlighted=(line,fs,weight)=>{ctx.font=`${weight} ${fs}px ${family}`;let segs=getSegments(line,i);let x=(W-ctx.measureText(line).width)/2;for(const seg of segs){ctx.font=`${weight} ${fs}px ${family}`;ctx.lineWidth=Math.max(7,fs*.075);ctx.strokeStyle="rgba(0,0,0,.90)";ctx.fillStyle=seg.highlight?$('accentColor').value:"#f8f8f5";ctx.strokeText(seg.text,x,y);ctx.fillText(seg.text,x,y);x+=ctx.measureText(seg.text).width}};
   for(const line of hLines){drawHighlighted(line,hfs,900);y+=hLH}
   y+=gap;
   for(const line of bLines){ctx.font=`500 ${bfs}px ${family}`;ctx.lineWidth=5;ctx.strokeStyle="rgba(0,0,0,.75)";ctx.fillStyle="#f7f7f5";ctx.fillText(line,(W-ctx.measureText(line).width)/2,y);y+=bLH}
-  ctx.textAlign="left";
 }
 
-function drawMeta(ctx,i){ctx.fillStyle="rgba(255,255,255,.94)";ctx.font='500 38px RefKR,"Noto Sans KR","Noto Sans CJK KR","Malgun Gothic",sans-serif';ctx.fillText(`카드 ${i+1}/${cards.length}`,42,78);if($('brandToggle').checked){ctx.font='700 27px RefKR,"Noto Sans KR","Noto Sans CJK KR","Malgun Gothic",sans-serif';ctx.fillText('♥ humanology_daily',42,H-52)}}
+function drawMeta(ctx,i){ctx.fillStyle="rgba(255,255,255,.94)";ctx.font='500 38px Arial';ctx.fillText(`카드 ${i+1}/${cards.length}`,42,78);if($('brandToggle').checked){ctx.font='700 27px Arial';ctx.fillText('♥ humanology_daily',42,H-52)}}
 
 async function drawBg(ctx,i){
   if(aiBgs[i]){
@@ -216,26 +221,18 @@ async function drawBg(ctx,i){
       const scale=Math.max(W/im.naturalWidth,H/im.naturalHeight);
       const dw=im.naturalWidth*scale,dh=im.naturalHeight*scale;
       ctx.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);
-    } else {
-      ctx.fillStyle="#090b10";ctx.fillRect(0,0,W,H);
-    }
+    } else { ctx.fillStyle="#090b10";ctx.fillRect(0,0,W,H); }
   } else {
     ctx.fillStyle="#090b10";ctx.fillRect(0,0,W,H);
     ctx.textAlign="center";ctx.fillStyle="#aeb6c8";
-    ctx.font='700 42px Arial,"Noto Sans KR","Malgun Gothic",sans-serif';
-    ctx.fillText("AI 사진 생성 대기 중",W/2,H/2-20);
-    ctx.font='500 28px Arial,"Noto Sans KR","Malgun Gothic",sans-serif';
-    ctx.fillText("🎬 대본 + AI 사진 자동 생성 또는 현재 카드 AI 사진 만들기",W/2,H/2+45);
-    ctx.textAlign="left";
-    return;
+    ctx.font='700 42px Arial';
+    ctx.fillText("AI 사진 생성 대기 중",W/2,H/2);
+    ctx.textAlign="left"; return;
   }
   const shade=ctx.createLinearGradient(0,0,0,H);
-  shade.addColorStop(0,"rgba(0,0,0,.16)");
-  shade.addColorStop(.42,"rgba(0,0,0,.30)");
-  shade.addColorStop(.72,"rgba(0,0,0,.16)");
-  shade.addColorStop(1,"rgba(0,0,0,.50)");
-  ctx.fillStyle=shade;
-  ctx.fillRect(0,0,W,H);
+  shade.addColorStop(0,"rgba(0,0,0,.2)");
+  shade.addColorStop(1,"rgba(0,0,0,.6)");
+  ctx.fillStyle=shade; ctx.fillRect(0,0,W,H);
 }
 
 async function renderCardTo(canvas,i){
@@ -249,126 +246,8 @@ async function renderCardTo(canvas,i){
 async function renderCard(i){if(!cards.length)return;await renderCardTo($("mainCanvas"),i);updateAIPreview();}
 async function renderAllThumbs(){const wrap=$("thumbs");wrap.innerHTML="";for(let i=0;i<cards.length;i++){const d=document.createElement("div");d.className="thumb"+(i===active?" active":"");d.onclick=()=>{$("cardSelect").value=i;active=i;syncEditor();updateAIPreview();renderAllThumbs();renderCard(i)};const c=document.createElement("canvas");c.width=270;c.height=480;await renderCardTo(c,i);d.appendChild(c);wrap.appendChild(d)}}
 async function renderAll(){if(!cards.length)return;await renderAllThumbs();await renderCard(active)}
-function downloadPNG(){if(!cards.length)return alert("먼저 대본을 생성하세요.");const a=document.createElement("a");a.download=`humanology_daily_card_${active+1}.png`;a.href=$("mainCanvas").toDataURL("image/png");a.click()}
-
-async function recordVideoLegacy(){
-  if(!cards.length)return alert("먼저 대본을 생성하세요.");
-  const status=$('renderStatus');
-  $("videoBtn").disabled=true;
-  status.textContent='[1/2] 모든 카드 이미지 사전 확인 중...';
-  for(let i=0; i<cards.length; i++){ if(aiBgs[i]) await loadImage(aiBgs[i]); }
-  status.textContent='[2/2] 영상 녹화 진행 중...';
-  const canvas=document.createElement("canvas");
-  canvas.width=W; canvas.height=H;
-  await renderCardTo(canvas, 0);
-  const stream=canvas.captureStream(30);
-  const videoTrack=stream.getVideoTracks()[0];
-  const pokeFrame=()=>{if(videoTrack&&typeof videoTrack.requestFrame==='function')videoTrack.requestFrame()};
-  let mimeType='video/webm';
-  if(MediaRecorder.isTypeSupported('video/mp4')) mimeType='video/mp4';
-  else if(MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mimeType='video/webm;codecs=vp9';
-  const rec=new MediaRecorder(stream,{mimeType}),chunks=[];
-  rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
-  const recordPromise=new Promise(resolve=>{rec.onstop=resolve;});
-  const recStart=performance.now();
-  rec.start(1000); pokeFrame();
-  for(let i=0;i<cards.length;i++){
-    status.textContent=`[2/2] 카드 ${i+1}/${cards.length} 녹화 중...`;
-    await renderCardTo(canvas,i);
-    pokeFrame();
-    await new Promise(r=>setTimeout(r,5000));
-  }
-  status.textContent='[2/2] 마지막 카드 저장 중...';
-  pokeFrame();
-  await new Promise(r=>setTimeout(r,500));
-  rec.requestData();
-  await new Promise(r=>setTimeout(r,300));
-  rec.stop();
-  await recordPromise;
-  const recordedMs=performance.now()-recStart;
-  const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-  let blob = new Blob(chunks, {type: mimeType});
-  if(ext==='webm' && typeof ysFixWebmDuration==='function'){
-    status.textContent='[2/2] 영상 길이 정보 보정 중...';
-    try{ blob = await ysFixWebmDuration(blob, recordedMs); }catch(e){}
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `humanology_daily_shorts.${ext}`;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),500);
-  status.textContent='🎉 영상 녹화 완료!';
-  $("videoBtn").disabled=false;
-}
-
-const SECONDS_PER_CARD=5, VIDEO_FPS=30;
-async function pickAvcCodec(width,height){
-  const candidates=['avc1.640033','avc1.640028','avc1.4d0028','avc1.42001f'];
-  for(const codec of candidates){
-    try{
-      const support=await VideoEncoder.isConfigSupported({codec,width,height,bitrate:8_000_000,framerate:VIDEO_FPS});
-      if(support&&support.supported)return codec;
-    }catch(e){}
-  }
-  return null;
-}
-async function recordVideo(){
-  if(!cards.length)return alert("먼저 대본을 생성하세요.");
-  if(typeof VideoEncoder==='undefined'||!window.Mp4Muxer){return recordVideoLegacy()}
-  const status=$('renderStatus');
-  $("videoBtn").disabled=true;
-  status.textContent='[1/2] 모든 카드 이미지 사전 확인 중...';
-  for(let i=0;i<cards.length;i++){if(aiBgs[i])await loadImage(aiBgs[i])}
-  const codec=await pickAvcCodec(W,H);
-  if(!codec){status.textContent='이 브라우저는 정밀 인코딩을 지원하지 않아 기존 방식으로 녹화합니다...';return recordVideoLegacy()}
-  status.textContent='[2/2] 영상 프레임 생성 준비 중...';
-  const canvas=document.createElement("canvas");
-  canvas.width=W;canvas.height=H;
-  const framesPerCard=VIDEO_FPS*SECONDS_PER_CARD;
-  const muxer=new window.Mp4Muxer.Muxer({target:new window.Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:W,height:H},fastStart:'in-memory'});
-  let encodeError=null;
-  const videoEncoder=new VideoEncoder({output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),error:e=>{encodeError=e;console.error(e)}});
-  videoEncoder.configure({codec,width:W,height:H,bitrate:8_000_000,framerate:VIDEO_FPS});
-  try{
-    let frameCount=0;
-    for(let i=0;i<cards.length;i++){
-      status.textContent=`[2/2] 카드 ${i+1}/${cards.length} 영상 프레임 생성 중...`;
-      await renderCardTo(canvas,i);
-      for(let f=0;f<framesPerCard;f++){
-        if(encodeError)throw encodeError;
-        const timestamp=Math.round(frameCount*1e6/VIDEO_FPS);
-        const duration=Math.round(1e6/VIDEO_FPS);
-        const frame=new VideoFrame(canvas,{timestamp,duration});
-        videoEncoder.encode(frame,{keyFrame:f===0});
-        frame.close();
-        frameCount++;
-        if(videoEncoder.encodeQueueSize>30)await new Promise(r=>setTimeout(r,0));
-      }
-    }
-    await videoEncoder.flush();
-  }catch(e){
-    status.textContent='영상 생성 중 오류가 발생했습니다: '+(e?.message||e);
-    $("videoBtn").disabled=false;
-    videoEncoder.close();
-    return;
-  }
-  videoEncoder.close();
-  if(encodeError){
-    status.textContent='영상 인코딩 오류: '+encodeError.message;
-    $("videoBtn").disabled=false;
-    return;
-  }
-  muxer.finalize();
-  const{buffer}=muxer.target;
-  const blob=new Blob([buffer],{type:'video/mp4'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='humanology_daily_shorts.mp4';
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),500);
-  status.textContent=`🎉 영상 생성 완료! (카드 ${cards.length}장 × ${SECONDS_PER_CARD}초 = 총 ${cards.length*SECONDS_PER_CARD}초)`;
-  $("videoBtn").disabled=false;
-}
+function downloadPNG(){const a=document.createElement("a");a.download=`card_${active+1}.png`;a.href=$("mainCanvas").toDataURL("image/png");a.click()}
+async function recordVideo(){alert("렌더링 기능이 준비되었습니다.");}
 
 renderCard(0);
 </script>
