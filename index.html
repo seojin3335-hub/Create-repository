@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="ko">
 <head>
+<script>
+  // ⬇️ 아래 따옴표 안(" ")에 API 키(sk-...)를 직접 입력해 주세요.
+  const MY_API_KEY = "";
+</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>humanology_daily AI Photo Shorts Factory v2.3</title>
 <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/youtube-play.png">
@@ -21,13 +25,6 @@
     <p class="small" style="margin-bottom:15px;">설정한 비밀번호를 입력해주세요.</p>
     <input type="password" id="authPassword" placeholder="비밀번호 입력" onkeyup="if(event.key==='Enter') verifyPassword()">
     <button type="button" class="accent" style="width:100%;margin-top:15px;" onclick="verifyPassword()">접속하기</button>
-    
-    <div style="margin-top:20px; border-top:1px solid #2b3040; pt:15px; text-align:left;">
-      <p class="small" style="color:#ff9f0a;">🔑 API 키 변경/재설정 필요한 경우:</p>
-      <input type="password" id="newApiKey" placeholder="OpenAI API 키 (sk-...)" style="font-size:12px; margin-top:5px;">
-      <button type="button" class="secondary" style="width:100%; font-size:12px; padding:8px; margin-top:5px;" onclick="saveNewKey()">API 키 저장하기</button>
-    </div>
-    
     <div id="authError" style="color:#ff3b30;margin-top:10px;font-size:13px;"></div>
   </div>
 </div>
@@ -35,7 +32,7 @@
 <div class="wrap">
 <div class="brand">♥ humanology_daily</div>
 <div class="sub">실제 사진 느낌의 9:16 심리 쇼츠 카드 제작기</div>
-<div class="notice"><b>이번 버전의 핵심:</b> 배경을 단순 그라데이션이 아니라 <b>AI가 실제 사진처럼 생성</b>하도록 만들었습니다. 대본을 만들면 <b>AI가 카드별 실제 사진 배경까지 자동 생성</b>하도록 했습니다.</div>
+<div class="notice"><b>보안 업데이트:</b> 접속 비밀번호 입력 후 바로 서비스 이용이 가능합니다.</div>
 <div class="grid">
 <section class="card"><h2>🔥 1. 소재 발굴</h2><label>주제</label><input id="topic" value="연애와 인간관계"><label>콘텐츠 스타일</label><select id="style"><option>자기진단</option><option>상대방 분석</option><option>선택형</option><option>심리퀴즈</option><option>리스트형</option></select><button type="button" class="accent" id="ideasBtn">소재 10개 뽑기</button><div id="ideas" class="result" style="margin-top:12px">여기에 AI 소재가 표시됩니다.</div></section>
 <section class="card"><h2>🎬 2. 쇼츠 대본</h2><label>선택한 주제</label><input id="selected" placeholder="예: 좋아할수록 연락이 늦어지는 이유 5가지"><label>카드 수</label><input id="count" type="number" min="3" max="10" value="6"><button type="button" class="accent" id="scriptBtn">🎬 대본 + AI 사진 자동 생성</button><label class="check"><input type="checkbox" id="autoPhoto"> 대본 생성 후 카드별 실제 사진 자동 생성 <span style="color:#ff9f0a">(ON이면 카드 수만큼 이미지 API 사용)</span></label><div id="script" class="result" style="margin-top:12px">생성된 쇼츠 대본이 표시됩니다.</div>
@@ -74,47 +71,21 @@
 </div></div></section>
 </div></div>
 <script>
-let activeKey = localStorage.getItem("hd_api_key") || "";
-
 function verifyPassword() {
   const pwd = document.getElementById("authPassword").value.trim();
   if (pwd === "5864") {
-    if (!activeKey) {
-      document.getElementById("authError").textContent = "저장된 API 키가 없습니다. 아래에 키를 먼저 등록해 주세요.";
-      return;
-    }
     document.getElementById("authModal").style.display = "none";
   } else {
     document.getElementById("authError").textContent = "비밀번호가 틀렸습니다.";
   }
 }
 
-function saveNewKey() {
-  const k = document.getElementById("newApiKey").value.trim();
-  const pwd = document.getElementById("authPassword").value.trim();
-  if (pwd !== "5864") {
-    document.getElementById("authError").textContent = "올바른 접속 비밀번호(5864)를 먼저 입력하세요.";
-    return;
-  }
-  if (!k.startsWith("sk-")) {
-    document.getElementById("authError").textContent = "올바른 OpenAI API 키 형식(sk-...)이 아닙니다.";
-    return;
-  }
-  localStorage.setItem("hd_api_key", k);
-  activeKey = k;
-  document.getElementById("authError").style.color = "#34c759";
-  document.getElementById("authError").textContent = "API 키가 안전하게 저장되었습니다!";
-  setTimeout(() => {
-    document.getElementById("authModal").style.display = "none";
-  }, 800);
-}
-
 function getActiveKey() {
-  if (!activeKey) {
-    document.getElementById("authModal").style.display = "flex";
-    throw new Error("API 키 인증이 필요합니다.");
+  if (!MY_API_KEY || MY_API_KEY.includes("여기에")) {
+    alert("코드 상단 3번째 줄에 올바른 API 키를 입력해 주세요.");
+    throw new Error("API 키 미설정");
   }
-  return activeKey;
+  return MY_API_KEY;
 }
 
 const $=id=>document.getElementById(id),W=1080,H=1920;let cards=[],active=0,bgOverrides={},bgNonce=0,aiBgs={},imgCache={};
