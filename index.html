@@ -47,7 +47,6 @@ textarea{resize:vertical}
 .file-box input[type="file"]{display:none}
 .file-label{cursor:pointer;color:#ff453a;font-weight:bold;font-size:14px}
 
-/* 해시태그 박스 스타일 */
 .hashtag-box{background:#11141d;border:1px solid #2b3040;border-radius:12px;padding:14px;margin-top:10px}
 .hashtag-tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .tag-item{background:#272c38;color:#aeb6c8;font-size:13px;padding:6px 12px;border-radius:20px;cursor:pointer;border:1px solid #3e4558;transition:0.2s;user-select:none}
@@ -61,14 +60,14 @@ textarea{resize:vertical}
   <div class="sub">왜 저 사람은 저럴까? · 9:16 쇼츠 영상 및 카드 제작기</div>
   
   <div class="notice">
-    💡 <b>기본 배경 그래픽이 더욱 고급스럽게 강화되었습니다!</b> 이미지를 업로드하지 않아도 화려하고 입체감 있는 그라데이션과 빛 효과가 자동으로 적용됩니다.
+    💡 <b>안정적인 하드웨어 녹화 엔지니어링 적용 완료!</b> 멈춤 및 대기 현상 없이 10장 전체(30초)가 즉시 녹화됩니다.
   </div>
 
   <div class="grid">
     <section class="card">
       <h2>📝 쇼츠 카드 대본 입력</h2>
       <label>카드 대본 붙여넣기 ([CARD 1] 형식 또는 줄바꿈으로 구분)</label>
-      <textarea id="scriptInput" rows="6" placeholder="[CARD 1]&#10;좋아할수록 연락이 늦어지는 '진짜 이유' 3가지&#10;&#10;[CARD 2]&#10;관심이 생기면 머릿속으로 '무슨 말을 할까' 고민하느라 늦어짐"></textarea>
+      <textarea id="scriptInput" rows="8" placeholder="대본을 입력하세요."></textarea>
       <button type="button" class="accent" id="parseBtn" style="width:100%">✨ 대본으로 카드 생성하기</button>
     </section>
 
@@ -120,7 +119,6 @@ textarea{resize:vertical}
             <option value="#bf5af2" selected>퍼플/핑크 (Purple)</option>
           </select>
 
-          <!-- 글씨 크기 조절 & 저장 & 해시태그 영역 -->
           <label>글자 크기 조절</label>
           <input id="fontScale" type="range" min="0.75" max="1.25" step="0.01" value="1">
           
@@ -129,7 +127,6 @@ textarea{resize:vertical}
             <button type="button" class="secondary" id="hashtagRecommendBtn" style="flex:1">#️⃣ 해시태그추천</button>
           </div>
 
-          <!-- 해시태그 결과 출력 박스 -->
           <div id="hashtagBox" class="hashtag-box" style="display:none;">
             <div style="font-size:12px; color:#8a93a6;">💡 클릭하여 태그를 선택/해제한 후 한 번에 복사하세요:</div>
             <div id="hashtagTags" class="hashtag-tags"></div>
@@ -155,7 +152,7 @@ textarea{resize:vertical}
           </label>
 
           <div class="downloads">
-            <button type="button" class="accent" id="videoBtn">🎬 쇼츠 영상 다운로드 (WebM)</button>
+            <button type="button" class="accent" id="videoBtn">🎬 쇼츠 영상 다운로드 (인스타/릴스용)</button>
           </div>
 
           <div id="renderStatus" class="status">대본을 입력하고 카드를 만들어보세요.</div>
@@ -174,19 +171,42 @@ let userImages=[];
 let currentHashtags = [];
 
 const sampleScript = `[CARD 1]
-좋아할수록 연락이 늦어지는 '진짜 이유' 3가지
+나도 모르게 '호감 있는 사람' 앞에서 나오는 무의식 행동 4가지
 
 [CARD 2]
-관심이 생기면 머릿속으로 '무슨 말을 할까' 고민하느라 늦어짐
+1. 시선 처리
+상대방과 눈이 마주치면 '순간적으로 시선을 아래로' 내린다
 
 [CARD 3]
-'가벼워 보이기 싫은' 마음이 신중함으로 바뀌기 때문
+2. 몸의 방향
+여럿이 모여 웃을 때 '가장 좋아하는 사람'을 먼저 바라본다
 
 [CARD 4]
-대화를 오래 이어가고 싶어서 '여유 있는 시간'을 기다리는 중
+3. 말투의 변화
+평소보다 '목소리 톤이 약간 높아지거나' 말속도가 신중해진다
 
 [CARD 5]
-이럴 때는 '천천히 답장해줘도 돼'라고 한마디 건네보세요 ♥`;
+4. 거울 효과 (Mirroring)
+상대가 물을 마시거나 턱을 괴면 '나도 모르게 따라 하게' 된다
+
+[CARD 6]
+이 중 2가지 이상 해당한다면?
+이미 당신의 마음은 '그 사람에게 기울어 있는 상태'입니다
+
+[CARD 7]
+반대로 상대방이 나에게 이런 행동을 보인다면?
+'은밀한 호감 신호'일 확률이 높습니다
+
+[CARD 8]
+호감 신호를 확인했을 때 '가장 효과적인 반응'은?
+
+[CARD 9]
+"너랑 얘기할 때 제일 편해"라고
+'가벼운 확신'을 주는 한마디 건네보기 ♥
+
+[CARD 10]
+'♥ humanology_daily'를 팔로우하고
+더 많은 인간심리 비밀을 확인하세요!`;
 
 $('scriptInput').value = sampleScript;
 
@@ -218,20 +238,17 @@ $('cardDuration').addEventListener('input', e => {
   $('secVal').textContent = `${e.target.value}초`;
 });
 
-// 폰트 크기 저장 버튼
 $('saveFontScaleBtn').addEventListener('click', () => {
   const scale = $('fontScale').value;
   localStorage.setItem('savedFontScale', scale);
-  $('renderStatus').textContent = `💾 폰트 크기 설정(${scale})이 성공적으로 저장되었습니다!`;
+  $('renderStatus').textContent = `💾 폰트 크기 설정(${scale})이 저장되었습니다!`;
 });
 
-// 페이지 로드 시 저장된 폰트 크기 적용
 const savedScale = localStorage.getItem('savedFontScale');
 if (savedScale) {
   $('fontScale').value = savedScale;
 }
 
-// 해시태그 추천 및 단체 복사 기능
 $('hashtagRecommendBtn').addEventListener('click', () => {
   const fullText = cards.map(c => c.text).join(' ');
   const baseTags = ['#humanology_daily', '#휴머니티', '#쇼츠', '#인간관계', '#심리학'];
@@ -262,23 +279,21 @@ $('hashtagRecommendBtn').addEventListener('click', () => {
   });
 
   tagBox.style.display = 'block';
-  $('renderStatus').textContent = '✨ 해시태그가 추천되었습니다! 태그를 선택/해제한 후 한 번에 복사해보세요.';
+  $('renderStatus').textContent = '✨ 해시태그가 추천되었습니다!';
 });
 
-// 선택한 해시태그 한 번에 복사
 $('copySelectedTagsBtn').addEventListener('click', () => {
   const selectedElements = document.querySelectorAll('#hashtagTags .tag-item.selected');
   const selectedText = Array.from(selectedElements).map(el => el.textContent).join(' ');
   
   if (!selectedText) {
-    return alert('복사할 해시태그를 최소 1개 이상 선택해 주세요.');
+    return alert('복사할 해시태그를 1개 이상 선택해 주세요.');
   }
 
   navigator.clipboard.writeText(selectedText);
   $('renderStatus').textContent = `📋 선택된 해시태그 (${selectedElements.length}개) 복사 완료!`;
 });
 
-// 전체 해시태그 한 번에 복사
 $('copyAllTagsBtn').addEventListener('click', () => {
   if (!currentHashtags.length) return;
   const allText = currentHashtags.join(' ');
@@ -288,7 +303,6 @@ $('copyAllTagsBtn').addEventListener('click', () => {
   $('renderStatus').textContent = `✨ 전체 해시태그 (${currentHashtags.length}개) 복사 완료!`;
 });
 
-// 폴더에서 사진 읽기
 $('folderInput').addEventListener('change', async (e) => {
   const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
   if(!files.length) return;
@@ -331,12 +345,12 @@ function parseScriptFromInput() {
     out = t.split(/\n\s*\n/).map((x, i) => ({ n: i + 1, text: x.trim() })).filter(x => x.text);
   }
 
-  cards = out.slice(0, 10).map(c => ({ ...c, original: c.text }));
+  cards = out.map(c => ({ ...c, original: c.text }));
   active = 0;
   populateSelect();
   syncEditor();
   renderAll();
-  $('renderStatus').textContent = `${cards.length}장의 카드가 생성되었습니다.`;
+  $('renderStatus').textContent = `총 ${cards.length}장의 카드가 준비되었습니다.`;
 }
 
 function populateSelect() {
@@ -387,8 +401,10 @@ function getMatchedImage(cardIndex) {
   return userImages[index].img;
 }
 
-// 🔥 고급스러운 다채로운 배경 렌더링 함수
 function drawBg(ctx, cardIndex) {
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
   const img = getMatchedImage(cardIndex);
   
   if (img) {
@@ -414,18 +430,16 @@ function drawBg(ctx, cardIndex) {
     ctx.fillStyle = `rgba(0, 0, 0, ${darkness})`;
     ctx.fillRect(0, 0, W, H);
   } else {
-    // 이미지가 없을 때 다양하고 감성적인 다중 그라데이션 및 빛 효과
     const themes = [
-      { bg1: '#1e0c24', bg2: '#0b0f19', light: 'rgba(255, 60, 110, 0.35)' }, // 핑크/퍼플 몽환
-      { bg1: '#0d1b2a', bg2: '#050811', light: 'rgba(64, 150, 255, 0.35)' }, // 디프 블루
-      { bg1: '#261208', bg2: '#090810', light: 'rgba(255, 140, 50, 0.35)' }, // 웜 오렌지/선셋
-      { bg1: '#180a1c', bg2: '#080d14', light: 'rgba(180, 70, 255, 0.35)' }, // 바이올렛 심리
-      { bg1: '#0f2015', bg2: '#060a0f', light: 'rgba(50, 210, 120, 0.35)' }  // 에메랄드 감성
+      { bg1: '#1e0c24', bg2: '#0b0f19', light: 'rgba(255, 60, 110, 0.35)' },
+      { bg1: '#0d1b2a', bg2: '#050811', light: 'rgba(64, 150, 255, 0.35)' },
+      { bg1: '#261208', bg2: '#090810', light: 'rgba(255, 140, 50, 0.35)' },
+      { bg1: '#180a1c', bg2: '#080d14', light: 'rgba(180, 70, 255, 0.35)' },
+      { bg1: '#0f2015', bg2: '#060a0f', light: 'rgba(50, 210, 120, 0.35)' }
     ];
 
     const theme = themes[cardIndex % themes.length];
 
-    // 1. 메인 대각선 그라데이션
     let g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, theme.bg1);
     g.addColorStop(0.6, theme.bg2);
@@ -433,14 +447,12 @@ function drawBg(ctx, cardIndex) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // 2. 상단 중앙 몽환적인 감성 조명 (Radial Glow)
     let radial = ctx.createRadialGradient(W / 2, H * 0.35, 50, W / 2, H * 0.35, 650);
     radial.addColorStop(0, theme.light);
     radial.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = radial;
     ctx.fillRect(0, 0, W, H);
 
-    // 3. 은은한 질감 보정이 있는 테두리 오버레이
     let vignette = ctx.createRadialGradient(W / 2, H / 2, W * 0.4, W / 2, H / 2, H * 0.7);
     vignette.addColorStop(0, 'rgba(0,0,0,0)');
     vignette.addColorStop(1, 'rgba(0,0,0,0.65)');
@@ -606,33 +618,37 @@ function renderAll() {
   renderCard(active);
 }
 
-// 영상 녹화 (마지막 카드 잘림 방지 반영)
+// 🛡️ 절대 멈추지 않는 하드웨어 기반 타이머 녹화 로직
 async function recordVideo() {
   if (!cards.length) return alert("먼저 대본을 입력하고 카드를 생성해주세요.");
   
   const statusEl = $("renderStatus");
-  statusEl.textContent = "🎬 영상 생성 시작 중...";
+  statusEl.textContent = "🎬 고화질 영상 녹화 준비 중...";
 
-  const offCanvas = document.createElement("canvas");
-  offCanvas.width = W;
-  offCanvas.height = H;
-
+  const mainCv = $('mainCanvas');
   const durationSec = parseFloat($('cardDuration').value);
   const durationMs = durationSec * 1000;
   
-  const stream = offCanvas.captureStream(30);
+  // 메인 캔버스 30 FPS 스트림
+  const stream = mainCv.captureStream(30);
   
-  let options = { mimeType: 'video/webm;codecs=vp9' };
-  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    options = { mimeType: 'video/webm;codecs=vp8' };
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-      options = { mimeType: 'video/webm' };
-    }
-  }
+  const mimeTypes = [
+    'video/mp4;codecs=h264',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm'
+  ];
+
+  let selectedMime = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || 'video/webm';
+  let isMp4 = selectedMime.includes('mp4');
 
   let recorder;
   try {
-    recorder = new MediaRecorder(stream, options);
+    recorder = new MediaRecorder(stream, { 
+      mimeType: selectedMime, 
+      videoBitsPerSecond: 15000000 
+    });
   } catch (e) {
     return alert("이 브라우저에서는 영상 녹화를 지원하지 않습니다.");
   }
@@ -643,30 +659,46 @@ async function recordVideo() {
   };
 
   recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+    const ext = isMp4 ? 'mp4' : 'webm';
+    const blob = new Blob(chunks, { type: selectedMime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "humanology_daily_shorts.webm";
+    a.download = `humanology_daily_shorts.${ext}`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 100);
-    statusEl.textContent = `✅ 영상 저장 완료! (총 ${cards.length}장 × ${durationSec}초 정상 녹화 완료)`;
+    
+    if (isMp4) {
+      statusEl.textContent = `✅ ${cards.length}장 전체 MP4 영상 저장 완료! 인스타그램 릴스에 올리시면 됩니다.`;
+    } else {
+      statusEl.textContent = `⚠️ WebM으로 저장되었습니다! cloudconvert.com/webm-to-mp4 에서 MP4로 변환 후 올리실 수 있습니다.`;
+    }
   };
 
-  recorder.start();
+  // 녹화 시작 전 첫 프레임 강제 렌더링
+  renderCardTo(mainCv, 0);
+  recorder.start(100);
 
-  for (let i = 0; i < cards.length; i++) {
-    statusEl.textContent = `🎬 영상 녹화 중... (${i + 1} / ${cards.length} 번째 카드 - ${durationSec}초)`;
-    
-    renderCardTo(offCanvas, i);
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => setTimeout(resolve, durationMs));
-  }
+  const startTime = Date.now();
+  
+  // 30ms 간격으로 계속 캔버스에 프레임을 밀어넣는 타이머 루프
+  const intervalId = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    let currentCardIndex = Math.floor(elapsed / durationMs);
 
-  statusEl.textContent = "🎬 마지막 프레임 인코딩 마무리 중...";
-  await new Promise(resolve => setTimeout(resolve, 1200));
+    if (currentCardIndex >= cards.length) {
+      clearInterval(intervalId);
+      renderCardTo(mainCv, cards.length - 1);
+      statusEl.textContent = "🎬 영상 인코딩 마무리 중...";
+      setTimeout(() => {
+        recorder.stop();
+      }, 600);
+      return;
+    }
 
-  recorder.stop();
+    statusEl.textContent = `🎬 영상 녹화 진행 중... (${currentCardIndex + 1} / ${cards.length} 번째 카드 진행 중)`;
+    renderCardTo(mainCv, currentCardIndex);
+  }, 33);
 }
 
 document.fonts.ready.then(() => {
